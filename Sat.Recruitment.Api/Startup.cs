@@ -1,15 +1,18 @@
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
+using Sat.Recruitment.Core.Behaviors;
+using Sat.Recruitment.Core.Commands.CreateUser;
+using Sat.Recruitment.Core.Entities;
+using Sat.Recruitment.Core.Interfaces;
+using Sat.Recruitment.Repositories.Implementation;
+using Sat.Recruitment.Repositories.Interfaces;
+using Sat.Recruitment.Services.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Sat.Recruitment.Api
 {
@@ -26,7 +29,19 @@ namespace Sat.Recruitment.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
             services.AddSwaggerGen();
+
+            services.Configure<Settings>(Configuration.GetSection(nameof(Settings)));
+
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+            services.AddValidatorsFromAssembly(typeof(CreateUserCommandValidator).Assembly);
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddMediatR(AppDomain.CurrentDomain.GetAssemblies());
+
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserRepository, UserRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
